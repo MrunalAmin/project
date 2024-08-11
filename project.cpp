@@ -37,3 +37,41 @@ Node* createNode(Parcel parcel) {
     }
     return newNode;
 }
+
+unsigned long djb2(const char* str) 
+{
+
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *str++)) 
+    {
+
+        hash = ((hash << 5) + hash) + c; 
+
+    }
+    return hash % HASH_TABLE_SIZE;
+}
+
+Node* insertNode(Node* root, Parcel parcel) 
+{
+
+    if (!root) 
+    {
+
+        return createNode(parcel);
+
+    }
+    if (parcel.weight < root->parcel.weight) 
+    {
+
+        root->left = insertNode(root->left, parcel);
+
+    }
+    else if (parcel.weight > root->parcel.weight) 
+    { 
+
+        root->right = insertNode(root->right, parcel);
+
+    }
+    return root;
+}
