@@ -75,3 +75,56 @@ Node* insertNode(Node* root, Parcel parcel)
     }
     return root;
 }
+
+void loadData(const char* filename) 
+{
+
+    FILE* file;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0) 
+    {
+
+        printf("Error opening file.\n");
+        return;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) 
+    {
+
+        Parcel parcel = { NULL, 0, 0.0f };
+        
+        char destinationBuffer[256];
+        if (sscanf_s(line, "%255[^,], %d, %f", destinationBuffer, (unsigned)sizeof(destinationBuffer), &parcel.weight, &parcel.value) == 3) 
+        {
+
+            destinationBuffer[sizeof(destinationBuffer) - 1] = '\0';
+            
+            parcel.destination = (char*)malloc(strlen(destinationBuffer) + 1);
+            if (parcel.destination) 
+            {
+
+                strcpy(parcel.destination, destinationBuffer);
+                
+                for (char* p = parcel.destination; *p; ++p) *p = tolower(*p);
+
+                unsigned long index = djb2(parcel.destination);
+                hashTable[index] = insertNode(hashTable[index], parcel);
+            }
+        }
+    }
+    fclose(file);
+}
+
+void freeTree(Node* root) 
+{
+
+    if (root) 
+    {
+        
+        freeTree(root->left);
+        freeTree(root->right);
+        free(root->parcel.destination); 
+        free(root);
+    }
+}
