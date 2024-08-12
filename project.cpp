@@ -85,21 +85,35 @@ void loadData(const char* filename)
     if (err != 0) 
     {
 
-        printf("Error opening file.\n");
+        printf("Error in opening the file.\n");
         return;
     }
 
-    char line[MAX_INPUT_LENGTH];
+    char line[256];
     while (fgets(line, sizeof(line), file)) 
     {
 
         Parcel parcel = { NULL, 0, 0.0f };
-        
-        char destinationBuffer[MAX_INPUT_LENGTH];
-        if (sscanf_s(line, "%255[^,], %d, %f", destinationBuffer, (unsigned)sizeof(destinationBuffer), &parcel.weight, &parcel.value) == 3) 
+        char destinationBuffer[21]; 
+        if (sscanf_s(line, "%20[^,], %d, %f", destinationBuffer, (unsigned)sizeof(destinationBuffer), &parcel.weight, &parcel.value) == 3) 
         {
 
-            destinationBuffer[sizeof(destinationBuffer) - 1] = '\0';
+            
+            if (parcel.weight < 100 || parcel.weight > 50000) 
+            {
+
+                printf("Invalid weight for parcel to %s: %d grams\n", destinationBuffer, parcel.weight);
+                continue; 
+            }
+
+            
+            if (parcel.value < 10.0f || parcel.value > 2000.0f) 
+            {
+
+                printf("Invalid valuation for parcel to %s: $%.2f\n", destinationBuffer, parcel.value);
+                continue; 
+            }
+
             
             parcel.destination = (char*)malloc(strlen(destinationBuffer) + 1);
             if (parcel.destination) 
@@ -112,6 +126,16 @@ void loadData(const char* filename)
                 unsigned long index = djb2(parcel.destination);
                 hashTable[index] = insertNode(hashTable[index], parcel);
             }
+            else 
+            {
+
+                printf("Mwmory  not located for destination.\n");
+            }
+        }
+        else 
+        {
+
+            printf("Invalid line format: %s", line);
         }
     }
     fclose(file);
@@ -148,5 +172,73 @@ void displayParcelsByWeight(Node* root, const char* country, int weight, int gre
             printf("Destination: %s, Weight: %d, Value: $%.2f\n", root->parcel.destination, root->parcel.weight, root->parcel.value);
         }
         displayParcelsByWeight(root->right, country, weight, greater);
+    }
+}
+
+void calculateTotalLoadAndValuation(Node* root, const char* country, int* totalWeight, float* totalValue)
+{
+
+    if (root) 
+    {
+
+        if (strcmp(root->parcel.destination, country) == 0) 
+        {
+
+            *totalWeight += root->parcel.weight;
+            *totalValue += root->parcel.value;
+        }
+        calculateTotalLoadAndValuation(root->left, country, totalWeight, totalValue);
+        calculateTotalLoadAndValuation(root->right, country, totalWeight, totalValue);
+    }
+}
+
+
+void findCheapestAndMostExpensive(Node* root, const char* country, Parcel* cheapest, Parcel* mostExpensive) 
+{
+
+    if (root) 
+    {
+
+        if (strcmp(root->parcel.destination, country) == 0) 
+        {
+
+            if (root->parcel.value < cheapest->value) 
+            {
+
+                *cheapest = root->parcel;
+            }
+            if (root->parcel.value > mostExpensive->value) 
+            {
+
+                *mostExpensive = root->parcel;
+            }
+        }
+        findCheapestAndMostExpensive(root->left, country, cheapest, mostExpensive);
+        findCheapestAndMostExpensive(root->right, country, cheapest, mostExpensive);
+    }
+}
+
+void findLightestAndHeaviest(Node* root, const char* country, Parcel* lightest, Parcel* heaviest) 
+{
+
+    if (root) 
+    {
+
+        if (strcmp(root->parcel.destination, country) == 0) 
+        {
+
+            if (root->parcel.weight < lightest->weight) 
+            {
+
+                *lightest = root->parcel;
+            }
+            if (root->parcel.weight > heaviest->weight) 
+            {
+
+                *heaviest = root->parcel;
+            }
+        }
+        findLightestAndHeaviest(root->left, country, lightest, heaviest);
+        findLightestAndHeaviest(root->right, country, lightest, heaviest);
     }
 }
