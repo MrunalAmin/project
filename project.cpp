@@ -256,3 +256,177 @@ void clearInputBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
+
+void menuAction() {
+    int choice;
+    char country[MAX_INPUT_LENGTH];
+    int weight;
+
+    while (1) {
+        displayMenu();
+        printf("Enter choice: ");
+
+        if (scanf_s("%d", &choice) != 1) {
+            printf("Invalid input. Please enter a valid choice.\n");
+            clearInputBuffer();
+            continue;
+        }
+
+        clearInputBuffer();
+
+        switch (choice) {
+        case 1:
+            printf("Enter country name: ");
+            if (fgets(country, sizeof(country), stdin) == NULL) {
+                printf("Error reading country name.\n");
+                break;
+            }
+            country[strcspn(country, "\n")] = 0;
+            for (char* p = country; *p; ++p) *p = tolower(*p);
+            {
+                unsigned long index = djb2(country);
+                if (hashTable[index]) {
+                    printf("Parcels for %s:\n", country);
+                    displayParcels(hashTable[index], country);
+                }
+                else {
+                    printf("No parcels found for %s.\n", country);
+                }
+            }
+            break;
+        case 2:
+            printf("Enter country name: ");
+            if (fgets(country, sizeof(country), stdin) == NULL) {
+                printf("Error reading country name.\n");
+                break;
+            }
+            country[strcspn(country, "\n")] = 0;
+
+            printf("Enter weight: ");
+            if (scanf_s("%d", &weight) != 1) {
+                printf("Invalid weight input.\n");
+                clearInputBuffer();
+                break;
+            }
+            clearInputBuffer();
+
+            printf("Select (1) for greater and (2) for less than %d grams:", weight);
+            int comparisonChoice;
+            if (scanf_s("%d", &comparisonChoice) != 1) {
+                printf("Invalid input.\n");
+                clearInputBuffer();
+                break;
+            }
+            clearInputBuffer();
+            for (char* p = country; *p; ++p) *p = tolower(*p);
+            {
+                unsigned long index = djb2(country);
+                if (hashTable[index]) {
+                    if (comparisonChoice == 1) {
+                        printf("Parcels for %s with weight greater than %d:\n", country, weight);
+                        displayParcelsByWeight(hashTable[index], country, weight, 1);
+                    }
+                    else if (comparisonChoice == 2) {
+                        printf("Parcels for %s with weight less than %d:\n", country, weight);
+                        displayParcelsByWeight(hashTable[index], country, weight, 0);
+                    }
+                    else {
+                        printf("Invalid choice. Please enter 1 for greater or 2 for less.\n");
+                    }
+                }
+                else {
+                    printf("No parcels found for %s.\n", country);
+                }
+            }
+            break;
+        case 3:
+            printf("Enter country name: ");
+            if (fgets(country, sizeof(country), stdin) == NULL) {
+                printf("Error reading country name.\n");
+                break;
+            }
+            country[strcspn(country, "\n")] = 0;
+            for (char* p = country; *p; ++p) *p = tolower(*p);
+            {
+                unsigned long index = djb2(country);
+                if (hashTable[index]) {
+                    int totalWeight = 0;
+                    float totalValue = 0;
+                    calculateTotalLoadAndValuation(hashTable[index], country, &totalWeight, &totalValue);
+                    printf("Total load for %s: %d g\n", country, totalWeight);
+                    printf("Total valuation for %s: $%.2f\n", country, totalValue);
+                }
+                else {
+                    printf("No parcels found for %s.\n", country);
+                }
+            }
+            break;
+        case 4:
+            printf("Enter country name: ");
+            if (fgets(country, sizeof(country), stdin) == NULL) {
+                printf("Error reading country name.\n");
+                break;
+            }
+            country[strcspn(country, "\n")] = 0;
+            for (char* p = country; *p; ++p) *p = tolower(*p);
+            {
+                unsigned long index = djb2(country);
+                if (hashTable[index]) {
+                    Parcel cheapest = { NULL, 0, 999999.0f };
+                    Parcel mostExpensive = { NULL, 0, 0.0f };
+                    findCheapestAndMostExpensive(hashTable[index], country, &cheapest, &mostExpensive);
+                    printf("Cheapest parcel for %s: Weight: %d, Value: $%.2f\n", country, cheapest.weight, cheapest.value);
+                    printf("Most expensive parcel for %s: Weight: %d, Value: $%.2f\n", country, mostExpensive.weight, mostExpensive.value);
+                }
+                else {
+                    printf("No parcels found for %s.\n", country);
+                }
+            }
+            break;
+        case 5:
+            printf("Enter country name: ");
+            if (fgets(country, sizeof(country), stdin) == NULL) {
+                printf("Error reading country name.\n");
+                break;
+            }
+            country[strcspn(country, "\n")] = 0;
+            for (char* p = country; *p; ++p) *p = tolower(*p);
+            {
+                unsigned long index = djb2(country);
+                if (hashTable[index]) {
+                    Parcel lightest = { NULL, 999999, 0.0f };
+                    Parcel heaviest = { NULL, 0, 0.0f };
+                    findLightestAndHeaviest(hashTable[index], country, &lightest, &heaviest);
+                    printf("Lightest parcel for %s: Weight: %d, Value: $%.2f\n", country, lightest.weight, lightest.value);
+                    printf("Heaviest parcel for %s: Weight: %d, Value: $%.2f\n", country, heaviest.weight, heaviest.value);
+                }
+                else {
+                    printf("No parcels found for %s.\n", country);
+                }
+            }
+            break;
+        case 6:
+            printf("Exiting...\n");
+            for (int i = 0; i < HASH_TABLE_SIZE; ++i) {
+                freeTree(hashTable[i]);
+            }
+            return;
+        default:
+            printf("Invalid choice. Please try again.\n");
+            break;
+        }
+    }
+}
+
+int main() {
+
+    for (int i = 0; i < HASH_TABLE_SIZE; ++i) {
+        hashTable[i] = NULL;
+    }
+
+    loadData("couriers.txt");
+
+    menuAction();
+
+    return 0;
+}
