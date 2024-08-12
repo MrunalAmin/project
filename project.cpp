@@ -5,6 +5,7 @@
 #pragma warning(disable: 4996)
 
 #define HASH_TABLE_SIZE 127
+#define MAX_INPUT_LENGTH 256
 
 typedef struct Parcel {
     char* destination;
@@ -88,13 +89,13 @@ void loadData(const char* filename)
         return;
     }
 
-    char line[256];
+    char line[MAX_INPUT_LENGTH];
     while (fgets(line, sizeof(line), file)) 
     {
 
         Parcel parcel = { NULL, 0, 0.0f };
         
-        char destinationBuffer[256];
+        char destinationBuffer[MAX_INPUT_LENGTH];
         if (sscanf_s(line, "%255[^,], %d, %f", destinationBuffer, (unsigned)sizeof(destinationBuffer), &parcel.weight, &parcel.value) == 3) 
         {
 
@@ -126,5 +127,26 @@ void freeTree(Node* root)
         freeTree(root->right);
         free(root->parcel.destination); 
         free(root);
+    }
+}
+
+void displayParcels(Node* root, const char* country) {
+    if (root) {
+        displayParcels(root->left, country);
+        if (strcmp(root->parcel.destination, country) == 0) {
+            printf("Destination: %s, Weight: %d, Value: $%.2f\n", root->parcel.destination, root->parcel.weight, root->parcel.value);
+        }
+        displayParcels(root->right, country);
+    }
+}
+
+void displayParcelsByWeight(Node* root, const char* country, int weight, int greater) {
+    if (root) {
+        displayParcelsByWeight(root->left, country, weight, greater);
+        if (strcmp(root->parcel.destination, country) == 0 &&
+            ((greater && root->parcel.weight > weight) || (!greater && root->parcel.weight < weight))) {
+            printf("Destination: %s, Weight: %d, Value: $%.2f\n", root->parcel.destination, root->parcel.weight, root->parcel.value);
+        }
+        displayParcelsByWeight(root->right, country, weight, greater);
     }
 }
