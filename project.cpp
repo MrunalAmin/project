@@ -2,7 +2,7 @@
  * FILE: project.cpp
  * PROJECT: project
  * PROGRAMMER: Mrunal Jayeshbhai Amin, Manan Kishorbhai Dholiya
-*  Student ID: 8961581, 8910311
+ *  Student ID: 8961581, 8910311
  * FIRST VERSION: 12-08-2024
  * DESCRIPTION:This program uses a hash table and binary search trees to maintain parcel information.
  *             It enables users to input parcel data from a file, show parcels by nation, filter parcels by weight,
@@ -17,23 +17,30 @@
 
 #pragma warning(disable: 4996)
 
+// Define constants
 #define HASH_TABLE_SIZE 127
 #define MAX_INPUT_LENGTH 256
 
-typedef struct Parcel {
+typedef struct Parcel 
+{
+    // Use dynamic allocation for destination
     char* destination;
     int weight;
     float value;
 } Parcel;
 
-typedef struct Node {
+// Node structure for BST
+typedef struct Node 
+{
     Parcel parcel;
     struct Node* left;
     struct Node* right;
 } Node;
 
+// Hash Table
 Node* hashTable[HASH_TABLE_SIZE];
 
+// Function prototypes
 Node* createNode(Parcel parcel);
 unsigned long djb2(const char* str);
 Node* insertNode(Node* root, Parcel parcel);
@@ -48,6 +55,29 @@ void displayMenu();
 void clearInputBuffer();
 void menuAction();
 
+
+int main() {
+    // Intialize hash table
+    for (int i = 0; i < HASH_TABLE_SIZE; ++i) {
+        hashTable[i] = NULL;
+    }
+    // Load data from file
+    loadData("couriers.txt");
+    // Perform menu actions
+    menuAction();
+
+    return 0;
+}
+
+/*
+ * Function: createNode
+ *
+ * Description: Creates a new node with the specified parcel data.
+ *
+ * Parameters: Parcel parcel : The parcel data to be stored in the node.
+ *
+ * Returns: Node* : A pointer to the newly created node, or NULL if memory allocation fails.
+ */
 Node* createNode(Parcel parcel) {
     Node* newNode = (Node*)malloc(sizeof(Node));
     if (newNode) {
@@ -56,6 +86,7 @@ Node* createNode(Parcel parcel) {
             strcpy(newNode->parcel.destination, parcel.destination);
         }
         else {
+            // Handle memory allocation failure for destination
             free(newNode);
             return NULL;
         }
@@ -66,6 +97,15 @@ Node* createNode(Parcel parcel) {
     return newNode;
 }
 
+/*
+ * Function: djb2
+ *
+ * Description: Computes a hash value for a given string using the djb2 algorithm.
+ *
+ * Parameters: const char* str : The string to be hashed.
+ *
+ * Returns: unsigned long : The hash value of the string modulo HASH_TABLE_SIZE.
+ */
 unsigned long djb2(const char* str) 
 {
 
@@ -74,12 +114,22 @@ unsigned long djb2(const char* str)
     while ((c = *str++)) 
     {
 
-        hash = ((hash << 5) + hash) + c; 
+        hash = ((hash << 5) + hash) + c; // Hash * 33 + c
 
     }
     return hash % HASH_TABLE_SIZE;
 }
 
+/*
+ * Function: insertNode
+ *
+ * Description: Inserts a parcel into the binary search tree (BST) based on its weight.
+ *
+ * Parameters: Node* root : The root of the BST.
+ *             Parcel parcel : The parcel data to be inserted.
+ *
+ * Returns: Node* : The root of the BST after insertion.
+ */
 Node* insertNode(Node* root, Parcel parcel) 
 {
 
@@ -95,6 +145,7 @@ Node* insertNode(Node* root, Parcel parcel)
         root->left = insertNode(root->left, parcel);
 
     }
+    // Ensure unique weight for the same destination
     else if (parcel.weight > root->parcel.weight) 
     { 
 
@@ -104,6 +155,15 @@ Node* insertNode(Node* root, Parcel parcel)
     return root;
 }
 
+/*
+ * Function: loadData
+ *
+ * Description: Loads parcel data from a specified file and inserts it into the hash table.
+ *
+ * Parameters: const char* filename : The name of the file to load data from.
+ *
+ * Returns: void
+ */
 void loadData(const char* filename) 
 {
 
@@ -125,15 +185,15 @@ void loadData(const char* filename)
         if (sscanf_s(line, "%20[^,], %d, %f", destinationBuffer, (unsigned)sizeof(destinationBuffer), &parcel.weight, &parcel.value) == 3) 
         {
 
-            
+            // Validate weight
             if (parcel.weight < 100 || parcel.weight > 50000) 
             {
 
-                printf("Invalid weight for parcel to %s: %d grams\n", destinationBuffer, parcel.weight);
-                continue; 
+                printf("Invalid weight for parcel to %s: %d grams\n", destinationBuffer, parcel.weight);                
+                continue; // Skip this parcel
             }
 
-            
+            // Validate Valuation
             if (parcel.value < 10.0f || parcel.value > 2000.0f) 
             {
 
@@ -141,13 +201,14 @@ void loadData(const char* filename)
                 continue; 
             }
 
-            
+            // Allocated memory for destination dynamically
             parcel.destination = (char*)malloc(strlen(destinationBuffer) + 1);
             if (parcel.destination) 
             {
 
                 strcpy(parcel.destination, destinationBuffer);
                 
+                // Covert destination to lowercase for constistent hashing
                 for (char* p = parcel.destination; *p; ++p) *p = tolower(*p);
 
                 unsigned long index = djb2(parcel.destination);
@@ -168,6 +229,15 @@ void loadData(const char* filename)
     fclose(file);
 }
 
+/*
+ * Function: freeTree
+ *
+ * Description: Frees the memory allocated for the nodes in a binary search tree (BST).
+ *
+ * Parameters: Node* root : The root of the BST.
+ *
+ * Returns: void
+ */
 void freeTree(Node* root) 
 {
 
@@ -176,21 +246,45 @@ void freeTree(Node* root)
         
         freeTree(root->left);
         freeTree(root->right);
+        // Free dynamically allocated destination
         free(root->parcel.destination); 
         free(root);
     }
 }
 
+/*
+ * Function: displayParcels
+ *
+ * Description: Displays all parcels with a specified destination from a binary search tree (BST).
+ *
+ * Parameters: Node* root : The root of the BST.
+ *             const char* country : The destination country to filter parcels by.
+ *
+ * Returns: void
+ */
 void displayParcels(Node* root, const char* country) {
     if (root) {
         displayParcels(root->left, country);
-        if (strcmp(root->parcel.destination, country) == 0) {
+        if (strcmp(root->parcel.destination, country) == 0) // Compare string to ensure user match
+        {
             printf("Destination: %s, Weight: %d, Value: $%.2f\n", root->parcel.destination, root->parcel.weight, root->parcel.value);
         }
         displayParcels(root->right, country);
     }
 }
 
+/*
+ * Function: displayParcelsByWeight
+ *
+ * Description: Displays parcels from a BST for a specific country with weight criteria.
+ *
+ * Parameters: Node* root : The root of the BST.
+ *             const char* country : The destination country to filter parcels by.
+ *             int weight : The weight threshold.
+ *             int greater : If 1, display parcels with weight greater than the threshold. Otherwise, display parcels with weight less.
+ *
+ * Returns: void
+ */
 void displayParcelsByWeight(Node* root, const char* country, int weight, int greater) {
     if (root) {
         displayParcelsByWeight(root->left, country, weight, greater);
@@ -202,6 +296,18 @@ void displayParcelsByWeight(Node* root, const char* country, int weight, int gre
     }
 }
 
+/*
+ * Function: calculateTotalLoadAndValuation
+ *
+ * Description: Calculates the total weight and value of parcels for a specified country.
+ *
+ * Parameters: Node* root : The root of the BST.
+ *             const char* country : The destination country to filter parcels by.
+ *             int* totalWeight : Pointer to store the total weight.
+ *             float* totalValue : Pointer to store the total value.
+ *
+ * Returns: void
+ */
 void calculateTotalLoadAndValuation(Node* root, const char* country, int* totalWeight, float* totalValue)
 {
 
@@ -219,7 +325,18 @@ void calculateTotalLoadAndValuation(Node* root, const char* country, int* totalW
     }
 }
 
-
+/*
+ * Function: findCheapestAndMostExpensive
+ *
+ * Description: Finds the cheapest and most expensive parcels for a specific country.
+ *
+ * Parameters: Node* root : The root of the BST.
+ *             const char* country : The destination country to filter parcels by.
+ *             Parcel* cheapest : Pointer to store the cheapest parcel.
+ *             Parcel* mostExpensive : Pointer to store the most expensive parcel.
+ *
+ * Returns: void
+ */
 void findCheapestAndMostExpensive(Node* root, const char* country, Parcel* cheapest, Parcel* mostExpensive) 
 {
 
@@ -245,6 +362,18 @@ void findCheapestAndMostExpensive(Node* root, const char* country, Parcel* cheap
     }
 }
 
+/*
+ * Function: findLightestAndHeaviest
+ *
+ * Description: Finds the lightest and heaviest parcels for a specific country.
+ *
+ * Parameters: Node* root : The root of the BST.
+ *             const char* country : The destination country to filter parcels by.
+ *             Parcel* lightest : Pointer to store the lightest parcel.
+ *             Parcel* heaviest : Pointer to store the heaviest parcel.
+ *
+ * Returns: void
+ */
 void findLightestAndHeaviest(Node* root, const char* country, Parcel* lightest, Parcel* heaviest) 
 {
 
@@ -269,6 +398,16 @@ void findLightestAndHeaviest(Node* root, const char* country, Parcel* lightest, 
         findLightestAndHeaviest(root->right, country, lightest, heaviest);
     }
 }
+
+/*
+ * Function: displayMenu
+ *
+ * Description: Displays the menu options to the user.
+ *
+ * Parameters: void
+ *
+ * Returns: void
+ */
 void displayMenu() {
     printf("Menu:\n");
     printf("1. Enter country name and display all parcels\n");
@@ -279,11 +418,29 @@ void displayMenu() {
     printf("6. Exit\n");
 }
 
+/*
+ * Function: clearInputBuffer
+ *
+ * Description: Clears the input buffer to handle any leftover input characters.
+ *
+ * Parameters: void
+ *
+ * Returns: void
+ */
 void clearInputBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+/*
+ * Function: menuAction
+ *
+ * Description: Executes user-selected menu actions, managing parcel display and analysis.
+ *
+ * Parameters: void
+ *
+ * Returns: void
+ */
 void menuAction() {
     int choice;
     char country[MAX_INPUT_LENGTH];
@@ -292,13 +449,13 @@ void menuAction() {
     while (1) {
         displayMenu();
         printf("Enter choice: ");
-
+        // Check if the input was successful
         if (scanf_s("%d", &choice) != 1) {
             printf("Invalid input. Please enter a valid choice.\n");
             clearInputBuffer();
             continue;
         }
-
+        // Clear any remaining new line character
         clearInputBuffer();
 
         switch (choice) {
@@ -308,7 +465,9 @@ void menuAction() {
                 printf("Error reading country name.\n");
                 break;
             }
+            // Remove new line character
             country[strcspn(country, "\n")] = 0;
+            // Convert input to lowercase for consistent hashing
             for (char* p = country; *p; ++p) *p = tolower(*p);
             {
                 unsigned long index = djb2(country);
@@ -399,7 +558,9 @@ void menuAction() {
             {
                 unsigned long index = djb2(country);
                 if (hashTable[index]) {
+                    // Extreamely big value for intialization
                     Parcel cheapest = { NULL, 0, 999999.0f };
+                    // Smallest possible value for the intialization
                     Parcel mostExpensive = { NULL, 0, 0.0f };
                     findCheapestAndMostExpensive(hashTable[index], country, &cheapest, &mostExpensive);
                     printf("Cheapest parcel for %s: Weight: %d, Value: $%.2f\n", country, cheapest.weight, cheapest.value);
@@ -421,7 +582,9 @@ void menuAction() {
             {
                 unsigned long index = djb2(country);
                 if (hashTable[index]) {
+                    // Extreamely big value for intialization
                     Parcel lightest = { NULL, 999999, 0.0f };
+                    // Smallest possible value for the intialization
                     Parcel heaviest = { NULL, 0, 0.0f };
                     findLightestAndHeaviest(hashTable[index], country, &lightest, &heaviest);
                     printf("Lightest parcel for %s: Weight: %d, Value: $%.2f\n", country, lightest.weight, lightest.value);
@@ -443,17 +606,4 @@ void menuAction() {
             break;
         }
     }
-}
-
-int main() {
-
-    for (int i = 0; i < HASH_TABLE_SIZE; ++i) {
-        hashTable[i] = NULL;
-    }
-
-    loadData("couriers.txt");
-
-    menuAction();
-
-    return 0;
 }
