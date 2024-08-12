@@ -1,6 +1,19 @@
+/*
+ * FILE: project.cpp
+ * PROJECT: project
+ * PROGRAMMER: Mrunal Jayeshbhai Amin, Manan Kishorbhai Dholiya
+*  Student ID: 8961581, 8910311
+ * FIRST VERSION: 12-08-2024
+ * DESCRIPTION:This program uses a hash table and binary search trees to maintain parcel information.
+ *             It enables users to input parcel data from a file, show parcels by nation, filter parcels by weight,
+ *             calculate total load and valuation, and determine the cheapest, most costly, lightest,
+ *             and heaviest packages for a certain country.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #pragma warning(disable: 4996)
 
