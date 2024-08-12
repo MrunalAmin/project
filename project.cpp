@@ -21,6 +21,20 @@ typedef struct Node {
 
 Node* hashTable[HASH_TABLE_SIZE];
 
+Node* createNode(Parcel parcel);
+unsigned long djb2(const char* str);
+Node* insertNode(Node* root, Parcel parcel);
+void loadData(const char* filename);
+void freeTree(Node* root);
+void displayParcels(Node* root, const char* country);
+void displayParcelsByWeight(Node* root, const char* country, int weight, int greater);
+void calculateTotalLoadAndValuation(Node* root, const char* country, int* totalWeight, float* totalValue);
+void findCheapestAndMostExpensive(Node* root, const char* country, Parcel* cheapest, Parcel* mostExpensive);
+void findLightestAndHeaviest(Node* root, const char* country, Parcel* lightest, Parcel* heaviest);
+void displayMenu();
+void clearInputBuffer();
+void menuAction();
+
 Node* createNode(Parcel parcel) {
     Node* newNode = (Node*)malloc(sizeof(Node));
     if (newNode) {
