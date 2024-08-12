@@ -242,3 +242,17 @@ void findLightestAndHeaviest(Node* root, const char* country, Parcel* lightest, 
         findLightestAndHeaviest(root->right, country, lightest, heaviest);
     }
 }
+void displayMenu() {
+    printf("Menu:\n");
+    printf("1. Enter country name and display all parcels\n");
+    printf("2. Enter country and weight to display parcels\n");
+    printf("3. Display total parcel load and valuation for the country\n");
+    printf("4. Display cheapest and most expensive parcel\n");
+    printf("5. Display lightest and heaviest parcel\n");
+    printf("6. Exit\n");
+}
+
+void clearInputBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
